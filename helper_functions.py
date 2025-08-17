@@ -1150,7 +1150,7 @@ def regression_results_bar_charts(model_names, mape, std_devs, pvals, ylabel, no
     ax.set_xticks(x)
     ax.set_xticklabels(model_names, rotation=45, ha='right')
     ax.set_ylabel(ylabel)
-    title = f'Regression Model Performance (Noise: {noise}%, {freq_label}, Data: {data_percentage}%)'
+    title = f'Regression Model Performance (Noise: {noise}%, {freq_label}, Data: {data_percentage})'
     ax.set_title(title)
     ax.grid(True, which='both', axis='y', linestyle='--', alpha=0.7)
     ax.legend()
@@ -1208,7 +1208,7 @@ def class_results_bar_charts(model_names, mape, std_devs, pvals, ylabel, noise, 
     ax.set_xticks(x)
     ax.set_xticklabels(model_names, rotation=45, ha='right')
     ax.set_ylabel(ylabel)
-    title = f'Classification Model Performance (Noise: {noise}%, {freq_label}, Data: {data_percentage}%)'
+    title = f'Classification Model Performance (Noise: {noise}%, {freq_label}, Data: {data_percentage})'
     ax.set_title(title)
     ax.set_ylim(0, np.max(mape + std_devs) + 0.1)
     ax.grid(axis='y', linestyle='--', alpha=0.7)
@@ -1747,3 +1747,4 @@ def process_plot_csv_files(folder_path):
 ########################################################################
 
 ########################################################################
+
