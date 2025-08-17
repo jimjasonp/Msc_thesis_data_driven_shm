@@ -1096,15 +1096,22 @@ def every_defect_mode_harmonics_plot(path,dd_index,df_index,all_index,dm_index):
     plt.show()
 
 
-
-def regression_results_bar_charts(model_names, mape, std_devs, pvals, ylabel, noise, n_points):
+def regression_results_bar_charts(model_names, mape, std_devs, pvals, ylabel, noise, n_points, data_percentage):
     '''
-    the inputs are the model names, the mape values, the standard deviation values, the p-value values as lists the label on y axis, the noise level and the number of datapoints.
-    
+    the inputs are the model names, the mape values, the standard deviation values, the p-value values as lists,
+    the label on y axis, the noise level, the number of datapoints, and the data percentage.
     '''
     import matplotlib.pyplot as plt
     import numpy as np
     from matplotlib.ticker import FuncFormatter
+
+    # Map number of points to frequency labels
+    point_freq_map = {
+        375: "250 kHz",
+        460: "300 kHz",
+        750: "500 kHz"
+    }
+    freq_label = point_freq_map.get(n_points, f"{n_points} points")
 
     plt.rcParams.update({'font.size': 16})
     plt.rcParams['lines.linewidth'] = 2.5
@@ -1117,12 +1124,12 @@ def regression_results_bar_charts(model_names, mape, std_devs, pvals, ylabel, no
     x = np.arange(model_count)
     bar_width = 0.45
 
-    fig, ax = plt.subplots(figsize=(16, 10))
+    fig, ax = plt.subplots(figsize=(20, 10))
 
     bars_base = ax.bar(x - bar_width / 2, mape[:, 0], width=bar_width, label='Time',
                        color='skyblue', edgecolor='black')
     bars_fourier = ax.bar(x + bar_width / 2, mape[:, 1], width=bar_width, label='fourier',
-                      color='salmon', edgecolor='black')
+                          color='salmon', edgecolor='black')
 
     for i in range(model_count):
         for j, bar_set in enumerate([bars_base, bars_fourier]):
@@ -1143,24 +1150,31 @@ def regression_results_bar_charts(model_names, mape, std_devs, pvals, ylabel, no
     ax.set_xticks(x)
     ax.set_xticklabels(model_names, rotation=45, ha='right')
     ax.set_ylabel(ylabel)
-    ax.set_title(f'Regression Model Performance (Noise: {noise}%, Points: {n_points})')
+    title = f'Regression Model Performance (Noise: {noise}%, {freq_label}, Data: {data_percentage}%)'
+    ax.set_title(title)
     ax.grid(True, which='both', axis='y', linestyle='--', alpha=0.7)
     ax.legend()
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f'results/reg{noise}{n_points}{data_percentage}.png', bbox_inches='tight', dpi=300)
+    plt.close()
 
 
-
-
-
-def class_results_bar_charts(model_names, mape, std_devs, pvals, ylabel, noise, n_points):
+def class_results_bar_charts(model_names, mape, std_devs, pvals, ylabel, noise, n_points, data_percentage):
     '''
-    the inputs are the model names, the mape values, the standard deviation values, the p-value values as lists the label on y axis, the noise level and the number of datapoints.
-    
+    the inputs are the model names, the mape values, the standard deviation values, the p-value values as lists,
+    the label on y axis, the noise level, the number of datapoints, and the data percentage.
     '''
     import matplotlib.pyplot as plt
     import numpy as np
+
+    # Map number of points to frequency labels
+    point_freq_map = {
+        375: "250 kHz",
+        460: "300 kHz",
+        750: "500 kHz"
+    }
+    freq_label = point_freq_map.get(n_points, f"{n_points} points")
 
     plt.rcParams.update({'font.size': 16})
     plt.rcParams['lines.linewidth'] = 2.5
@@ -1173,12 +1187,12 @@ def class_results_bar_charts(model_names, mape, std_devs, pvals, ylabel, noise, 
     x = np.arange(model_count)
     bar_width = 0.45
 
-    fig, ax = plt.subplots(figsize=(16, 10))
+    fig, ax = plt.subplots(figsize=(20, 10))
 
-    bars_base = ax.bar(x - bar_width/2, mape[:, 0], width=bar_width, label='Time', 
+    bars_base = ax.bar(x - bar_width/2, mape[:, 0], width=bar_width, label='Time',
                        color='skyblue', edgecolor='black')
     bars_fourier = ax.bar(x + bar_width/2, mape[:, 1], width=bar_width, label='fourier',
-                      color='salmon', edgecolor='black')
+                          color='salmon', edgecolor='black')
 
     for i in range(model_count):
         for j, bar_set in enumerate([bars_base, bars_fourier]):
@@ -1194,13 +1208,15 @@ def class_results_bar_charts(model_names, mape, std_devs, pvals, ylabel, noise, 
     ax.set_xticks(x)
     ax.set_xticklabels(model_names, rotation=45, ha='right')
     ax.set_ylabel(ylabel)
-    ax.set_title(f'Classification Model Performance (Noise: {noise}%, Points: {n_points})')
+    title = f'Classification Model Performance (Noise: {noise}%, {freq_label}, Data: {data_percentage}%)'
+    ax.set_title(title)
     ax.set_ylim(0, np.max(mape + std_devs) + 0.1)
     ax.grid(axis='y', linestyle='--', alpha=0.7)
     ax.legend()
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f'results/clf{noise}{n_points}{data_percentage}.png', bbox_inches='tight', dpi=300)
+    plt.close()
 
 
 
@@ -1611,15 +1627,15 @@ def extract_regression_data(csv_path):
     import pandas as pd
     """
     Extracts model names, MAPE values, standard deviations, and p-values
-    from a regression results CSV. Also returns noise level and number of points.
+    from a regression results CSV. Also returns noise level, number of points, and data percentage.
     """
     df = pd.read_csv(csv_path)
 
     # Get metadata
     n_points = df['n_points'].iloc[0]
     noise = df['noise_percent'].iloc[0]
+    data_percentage = df['data_percentage'].iloc[0] if 'data_percentage' in df.columns else 100
 
-    # Assumes transformation column includes 'none' and 'fourier'
     assert {'none', 'fourier'}.issubset(set(df['transformation'])), \
         "Missing expected transformations: 'none' and 'fourier'"
 
@@ -1638,7 +1654,7 @@ def extract_regression_data(csv_path):
         std_devs.append([base_row['std_mape'] * 100, fourier_row['std_mape'] * 100])
         pvals.append([base_row['pval'], fourier_row['pval']])
 
-    return model_names, np.array(mape), np.array(std_devs), np.array(pvals), noise, n_points
+    return model_names, np.array(mape), np.array(std_devs), np.array(pvals), noise, n_points, data_percentage
 
 
 def extract_classification_data(csv_path):
@@ -1646,12 +1662,13 @@ def extract_classification_data(csv_path):
     import numpy as np
     """
     Extracts model names, accuracy values, standard deviations, and F1 scores
-    from a classification results CSV. Also returns noise level and number of points.
+    from a classification results CSV. Also returns noise level, number of points, and data percentage.
     """
     df = pd.read_csv(csv_path)
 
     n_points = df['n_points'].iloc[0]
     noise = df['noise_percent'].iloc[0]
+    data_percentage = df['data_percentage'].iloc[0] if 'data_percentage' in df.columns else 100
 
     assert {'none', 'fourier'}.issubset(set(df['transformation'])), \
         "Missing expected transformations: 'none' and 'fourier'"
@@ -1671,8 +1688,7 @@ def extract_classification_data(csv_path):
         std_devs.append([base_row['std_acc'], fourier_row['std_acc']])
         f1_scores.append([base_row['f1_macro'], fourier_row['f1_macro']])
 
-    return model_names, np.array(acc), np.array(std_devs), np.array(f1_scores), noise, n_points
-
+    return model_names, np.array(acc), np.array(std_devs), np.array(f1_scores), noise, n_points, data_percentage
 
 
 def process_plot_csv_files(folder_path):
@@ -1680,9 +1696,9 @@ def process_plot_csv_files(folder_path):
     import pandas as pd
     """
     Processes CSV files in the given folder:
-    - Splits each file by unique noise_percent values.
-    - For classification files, runs class_results_bar_charts on each noise level.
-    - For regression files, runs regression_results_bar_charts on each noise level.
+    - Splits each file by unique noise_percent and data_percentage values.
+    - For classification files, runs class_results_bar_charts on each subset.
+    - For regression files, runs regression_results_bar_charts on each subset.
     """
     for filename in os.listdir(folder_path):
         if filename.endswith(".csv"):
@@ -1691,31 +1707,35 @@ def process_plot_csv_files(folder_path):
 
             if "classification" in filename.lower():
                 for noise in sorted(df['noise_percent'].unique()):
-                    subset = df[df['noise_percent'] == noise]
-                    temp_path = os.path.join(folder_path, f"temp_classification_noise_{noise}.csv")
-                    subset.to_csv(temp_path, index=False)
+                    for perc in sorted(df['data_percentage'].unique()):
+                        subset = df[(df['noise_percent'] == noise) & (df['data_percentage'] == perc)]
+                        temp_path = os.path.join(folder_path, f"temp_classification_noise_{noise}_perc_{perc}.csv")
+                        subset.to_csv(temp_path, index=False)
 
-                    model_names, acc, stds, f1_macro, _, n_points = extract_classification_data(temp_path)
-                    class_results_bar_charts(model_names, acc, stds, f1_macro,
-                                             ylabel='Accuracy',
-                                             noise=noise,
-                                             n_points=n_points)
+                        model_names, acc, stds, f1_macro, _, n_points, data_percentage = extract_classification_data(temp_path)
+                        class_results_bar_charts(model_names, acc, stds, f1_macro,
+                                                 ylabel='Accuracy',
+                                                 noise=noise,
+                                                 n_points=n_points,
+                                                 data_percentage=data_percentage)
 
-                    os.remove(temp_path)
+                        os.remove(temp_path)
 
             elif "regression" in filename.lower():
                 for noise in sorted(df['noise_percent'].unique()):
-                    subset = df[df['noise_percent'] == noise]
-                    temp_path = os.path.join(folder_path, f"temp_regression_noise_{noise}.csv")
-                    subset.to_csv(temp_path, index=False)
+                    for perc in sorted(df['data_percentage'].unique()):
+                        subset = df[(df['noise_percent'] == noise) & (df['data_percentage'] == perc)]
+                        temp_path = os.path.join(folder_path, f"temp_regression_noise_{noise}_perc_{perc}.csv")
+                        subset.to_csv(temp_path, index=False)
 
-                    model_names, mape, stds, pvals, _, n_points = extract_regression_data(temp_path)
-                    regression_results_bar_charts(model_names, mape, stds, pvals,
-                                                  ylabel='MAPE (%)',
-                                                  noise=noise,
-                                                  n_points=n_points)
+                        model_names, mape, stds, pvals, _, n_points, data_percentage = extract_regression_data(temp_path)
+                        regression_results_bar_charts(model_names, mape, stds, pvals,
+                                                      ylabel='MAPE (%)',
+                                                      noise=noise,
+                                                      n_points=n_points,
+                                                      data_percentage=data_percentage)
 
-                    os.remove(temp_path)
+                        os.remove(temp_path)
 
 
 ########################################################################
